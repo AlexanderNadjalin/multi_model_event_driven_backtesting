@@ -10,12 +10,6 @@ class Position:
     All transactions are separated into buy or sell to facilitate accounting.
     Short selling is supported.
     A Position "knows" its full history for all its transactions.
-
-    Credit to Michael Halls-Moore @ QuantStart.com:
-        https://github.com/mhallsmoore/qstrader/blob/master/qstrader/broker/portfolio/position.py
-        I had trouble getting all the details correct and qstrader is a great source of knowledge for this.
-        Thank you!
-        Copyright (c) 2015-2021 QuantStart.com, QuarkGluon Ltd
     """
     def __init__(self):
         self.name = ''
