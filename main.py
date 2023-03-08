@@ -11,6 +11,6 @@ if __name__ == '__main__':
     test = bt.Backtest(market=market,
                        pf=port,
                        start_date='2023-01-02',
-                       end_date='2023-01-06')
+                       end_date='2023-01-05')
 
     quit()
