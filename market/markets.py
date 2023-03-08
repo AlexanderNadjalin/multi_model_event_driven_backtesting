@@ -39,7 +39,7 @@ class Markets:
     def read_csv(self) -> None:
         """
 
-        Read config.ini file. Read all files in /input_files/markets.
+        Read config.ini file. Read all files in /input_files/assets.
         All files must be of ".csv" type and in Yahoo Finance historical download daily format.
         Merge all files on dates with inner join, leaving the maximum number of dates that are equal.
         :return: None.
