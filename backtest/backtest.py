@@ -3,19 +3,20 @@ import configparser as cp
 from event_handler import event
 from market.markets import Markets
 from holdings.portfolio import Portfolio
-# from strategy.strategy import Strategy
+from holdings.portfolio_master import MasterPortfolio
+from strategy.strategy import Strategy
 # from metric.metric import Metric
 
 
-class Backtest:
+class Backtests:
     """
 
     Main backtest class.
-    Holds a Portfolio, Market and Metric object.
+    Holds a MasterPortfolio, a Market and Metric object.
     """
     def __init__(self,
                  market: Markets,
-                 pf: Portfolio,
+                 mpf: MasterPortfolio,
                  start_date: str,
                  end_date: str,
                  verbose=False):
@@ -26,7 +27,7 @@ class Backtest:
 
         self.cont_backtest = True
         self.market = market
-        self.pf = pf
+        self.mpf = mpf
 
         self.verbose = verbose
         self.metric = None
@@ -75,20 +76,19 @@ class Backtest:
             print('CRITICAL: Date ' + date + ' does not exist in market data files. Aborted.')
             quit()
 
-    # def add_strategy(self,
-    #                  strategy=Strategy) -> None:
-    #     """
-    #
-    #     Add a strategy to a backest.
-    #     Strategies require information about Market and Portfolio and can't be initialized before the backest.
-    #     :param strategy: Strategy object.
-    #     :return: None.
-    #     """
-    #     self.strategy = strategy
+    def add_strategy(self,
+                     strategy=Strategy) -> None:
+        """
+        #     Add a strategy to a backest.
+        Strategies require information about Market and Portfolio and can't be initialized before the backest.
+        :param strategy: Strategy object.
+        :return: None.
+        """
+        self.strategy = strategy
 
     def run(self) -> None:
         """
-
+    
         Runs the backtest as an infinite outer loop for handling dates, and an inner loop for handling events.
         :return: None.
         """
@@ -100,88 +100,90 @@ class Backtest:
                 market_ev = event.NewBar(date=self.current_date)
                 self.events.put(item=market_ev)
 
-                # Infinite inner loop for handling events
-                while True:
-                    try:
-                        # Get event from queue.
-                        self.event = self.events.get(False)
-                    except queue.Empty:
-                        # Break inner loop if no events in queue
-                        break
+                for pf in self.mpf.portfolios:
+                    self.strategy = self.mpf.strategies[self.mpf.portfolios.index(pf)]
+                    # Infinite inner loop for handling events
+                    while True:
+                        try:
+                            # Get event from queue.
+                            self.event = self.events.get(False)
+                        except queue.Empty:
+                            # Break inner loop if no events in queue
+                            break
 
-                    if self.event.type == 'MARKET':
-                        self.pf.update_all_market_values(date=self.event.date,
-                                                         market_data=self.market)
-                        self.events.task_done()
+                        if self.event.type == 'BAR':
+                            pf.update_all_market_values(date=self.event.date,
+                                                        market_data=self.market)
+                            self.events.task_done()
 
-                        if self.strategy is not None:
-                            calc_signal_ev = event.CalcSignal(date=self.current_date)
-                            self.events.put(item=calc_signal_ev)
+                            if self.strategy is not None:
+                                calc_signal_ev = event.CalcSignal(date=self.current_date)
+                                self.events.put(item=calc_signal_ev)
 
-                        if self.verbose:
-                            print(self.event.details)
+                            if self.verbose:
+                                print(self.event.details)
 
-                    if self.event.type == 'CALCSIGNAL':
-                        # Different strategies require different ways to handle calculation of signals.
-                        if self.strategy.name == 'Periodic re-balancing':
-                            # Get market data for specific date.
-                            cols = list(self.strategy.id_weight.keys())
-                            df = self.market.select(columns=cols,
-                                                    start_date=self.event.date,
-                                                    end_date=self.event.date)
-                            # Start-of-month re-balance.
-                            if df['is_som'].iloc[0] == 1 and self.strategy.period == 'som':
-                                self.strategy.calc_signal(events=self.events,
-                                                          data=df,
-                                                          idx=self.current_index,
-                                                          pf=self.pf)
-                            # End-of-month re-balance.
-                            elif df['is_eom'].iloc[0] == 1 and self.strategy.period == 'eom':
-                                self.strategy.calc_signal(events=self.events,
-                                                          data=df,
-                                                          idx=self.current_index,
-                                                          pf=self.pf)
-                            # Start-of-week re-balance.
-                            elif df['is_sow'].iloc[0] == 1 and self.strategy.period == 'sow':
-                                self.strategy.calc_signal(events=self.events,
-                                                          data=df,
-                                                          idx=self.current_index,
-                                                          pf=self.pf)
-                            # End-of-week re-balance.
-                            elif df['is_eow'].iloc[0] == 1 and self.strategy.period == 'eow':
-                                self.strategy.calc_signal(events=self.events,
-                                                          data=df,
-                                                          idx=self.current_index,
-                                                          pf=self.pf)
-                        else:
-                            pass
+                        if self.event.type == 'CALCSIGNAL':
+                            # Different strategies require different ways to handle calculation of signals.
+                            if self.strategy.name == 'Periodic re-balancing':
+                                # Get market data for specific date.
+                                cols = list(self.strategy.id_weight.keys())
+                                df = self.market.select(columns=cols,
+                                                        start_date=self.event.date,
+                                                        end_date=self.event.date)
+                                # Start-of-month re-balance.
+                                if df['is_som'].iloc[0] == 1 and self.strategy.period == 'som':
+                                    self.strategy.calc_signal(events=self.events,
+                                                              data=df,
+                                                              idx=self.current_index,
+                                                              pf=pf)
+                                # End-of-month re-balance.
+                                elif df['is_eom'].iloc[0] == 1 and self.strategy.period == 'eom':
+                                    self.strategy.calc_signal(events=self.events,
+                                                              data=df,
+                                                              idx=self.current_index,
+                                                              pf=pf)
+                                # Start-of-week re-balance.
+                                elif df['is_sow'].iloc[0] == 1 and self.strategy.period == 'sow':
+                                    self.strategy.calc_signal(events=self.events,
+                                                              data=df,
+                                                              idx=self.current_index,
+                                                              pf=pf)
+                                # End-of-week re-balance.
+                                elif df['is_eow'].iloc[0] == 1 and self.strategy.period == 'eow':
+                                    self.strategy.calc_signal(events=self.events,
+                                                              data=df,
+                                                              idx=self.current_index,
+                                                              pf=pf)
+                            else:
+                                pass
 
-                        if self.verbose:
-                            print(self.event.details)
+                            if self.verbose:
+                                print(self.event.details)
 
-                        self.events.task_done()
+                            self.events.task_done()
 
-                    if self.event.type == 'TRANSACTION':
-                        self.pf.transact_security(trans=self.event.trans)
-                        if self.verbose:
-                            print(self.event.details)
+                        if self.event.type == 'TRANSACTION':
+                            pf.transact_security(trans=self.event.trans)
+                            if self.verbose:
+                                print(self.event.details)
 
-                        self.events.task_done()
+                            self.events.task_done()
 
-                self.current_index += 1
+                    self.current_index += 1
 
-                # End backtest when end_date is reached.
-                if self.current_index > self.end_index:
-                    # Calculate metrics.
-                    self.metric.calc_all(self.pf)
+                    # End backtest when end_date is reached.
+                    if self.current_index > self.end_index:
+                        # Calculate metrics.
+                        # self.metric.calc_all(pf)
 
-                    self.cont_backtest = False
+                        self.cont_backtest = False
 
-                    self.metric.calc_all(pf=self.pf)
+                        # self.metric.calc_all(pf=pf)
 
-                    print('SUCCESS: Backtest completed.')
-                else:
-                    self.current_date = \
-                        self.market.data.iloc[self.current_index, :].to_frame().transpose().index.values[0]
+                        print('SUCCESS: Backtest completed for portfolio: ' + pf.pf_id + '.')
+                    else:
+                        self.current_date = \
+                            self.market.data.iloc[self.current_index, :].to_frame().transpose().index.values[0]
             else:
                 break

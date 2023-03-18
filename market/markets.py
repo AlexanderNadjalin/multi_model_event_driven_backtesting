@@ -205,10 +205,10 @@ class Markets:
                 print('CRITICAL: Selected end date not in market data. Aborted.')
                 quit()
             mask = (self.data.index.values >= start_date) & (self.data.index.values <= end_date)
-            cols.append('is_som')
-            cols.append('is_eom')
-            cols.append('is_sow')
-            cols.append('is_eow')
+            # cols.append('is_som')
+            # cols.append('is_eom')
+            # cols.append('is_sow')
+            # cols.append('is_eow')
             df = self.data[cols].loc[mask]
             return df
         else:

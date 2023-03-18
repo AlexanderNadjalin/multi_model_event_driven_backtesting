@@ -1,4 +1,3 @@
-import configparser as cp
 import pandas as pd
 from holdings.transaction import Transaction
 from market.markets import Markets
@@ -14,21 +13,15 @@ class Portfolio:
     Portfolio.records has calculated metrics, if the metrics.py functions are called.
     """
     def __init__(self,
-                 inception_date: str) -> None:
-        """
+                 init_cash: float,
+                 benchmark: str,
+                 pf_id: str) -> None:
 
-        Initialize Portfolio object.
-        :param inception_date: Creation date of portfolio.
-        """
-        self.config = self.config()
-        self.commission = self.config['commission']['commission_scheme']
-        self.init_cash = float(self.config['init_cash']['init_cash'])
-        self.currency = self.config['portfolio_information']['currency']
+        self.init_cash = init_cash
         self.current_cash = self.init_cash
-        self.inception_date = inception_date
-        self.current_date = self.inception_date
-        self.benchmark = self.config['benchmark']['benchmark_name']
-        self.pf_id = self.config['portfolio_information']['pf_id']
+        self.current_date = None
+        self.benchmark = benchmark
+        self.pf_id = pf_id
         self.position_handler = PositionHandler()
         self.symbols = []
         self.history = pd.DataFrame()
@@ -37,21 +30,6 @@ class Portfolio:
 
         self.add_symbols()
         print('SUCCESS: Portfolio ' + self.pf_id + ' created.')
-
-    @staticmethod
-    def config() -> cp.ConfigParser:
-        """
-
-        Read portfolio_config file and return a config object. Used to set default parameters for holdings objects.
-
-        :return: A ConfigParser object.
-        """
-        conf = cp.ConfigParser()
-        conf.read('holdings/portfolio_config.ini')
-
-        print('INFO: Read portfolio_config.ini file.')
-
-        return conf
 
     def add_symbols(self):
         """
@@ -94,7 +72,7 @@ class Portfolio:
         :return: None.
         """
         if self.benchmark != '':
-            self.history = pd.DataFrame(columns=['current_date',
+            self.history = pd.DataFrame(columns=['date',
                                                  'current_cash',
                                                  'total_commission',
                                                  'realized_pnl',
@@ -103,7 +81,7 @@ class Portfolio:
                                                  'total_market_value',
                                                  'benchmark_value'])
         else:
-            self.history = pd.DataFrame(columns=['current_date',
+            self.history = pd.DataFrame(columns=['date',
                                                  'current_cash',
                                                  'total_commission',
                                                  'realized_pnl',
@@ -122,28 +100,27 @@ class Portfolio:
         :return:
         """
         if self.benchmark != '':
-            bm_value = market_data.select(columns=[self.benchmark],
+            bm_value = market_data.select(columns=[self.benchmark + '_Close'],
                                           start_date=self.current_date,
                                           end_date=self.current_date).iloc[0, 0]
-            new_trans = {'current_date': date,
-                         'current_cash': self.current_cash,
-                         'total_commission': self.total_commission,
-                         'realized_pnl': self.total_realized_pnl,
-                         'unrealized_pnl': self.total_unrealized_pnl,
-                         'total_pnl': self.total_pnl,
-                         'total_market_value': self.total_market_value,
-                         'benchmark_value': bm_value}
+            new_trans = {'date': [date],
+                         'current_cash': [self.current_cash],
+                         'total_commission': [self.total_commission],
+                         'realized_pnl': [self.total_realized_pnl],
+                         'unrealized_pnl': [self.total_unrealized_pnl],
+                         'total_pnl': [self.total_pnl],
+                         'total_market_value': [self.total_market_value],
+                         'benchmark_value': [bm_value]}
         else:
-            new_trans = {'current_date': date,
-                         'current_cash': self.current_cash,
-                         'total_commission': self.total_commission,
-                         'realized_pnl': self.total_realized_pnl,
-                         'unrealized_pnl': self.total_unrealized_pnl,
-                         'total_pnl': self.total_pnl,
-                         'total_market_value': self.total_market_value}
+            new_trans = {'date': [date],
+                         'current_cash': [self.current_cash],
+                         'total_commission': [self.total_commission],
+                         'realized_pnl': [self.total_realized_pnl],
+                         'unrealized_pnl': [self.total_unrealized_pnl],
+                         'total_pnl': [self.total_pnl],
+                         'total_market_value': [self.total_market_value]}
 
-        self.history = self.history.append(new_trans,
-                                           ignore_index=True)
+        self.history = pd.concat([self.history, pd.DataFrame(new_trans)])
 
     def transact_security(self,
                           trans: Transaction) -> None:

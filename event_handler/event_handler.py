@@ -1,5 +1,6 @@
 import queue
 import event as ev
+import backtest.backtest as bt
 
 
 class EventHandler:
@@ -8,7 +9,7 @@ class EventHandler:
     Class for handling events.
     """
     def __init__(self,
-                 bt: Backtest,
+                 bt: bt.Backtest(),
                  verbose=False):
         """
 
@@ -67,6 +68,7 @@ class EventHandler:
         # See if there is a trade signal.
         if e.type == 'CALCSIGNAL':
             # TODO Complete and add risk handling.
+            # TODO Complete and add re-balancing.
             df = self.bt.market.select(columns=self.bt.pf.symbols,
                                        start_date=e.date,
                                        end_date=e.date)
