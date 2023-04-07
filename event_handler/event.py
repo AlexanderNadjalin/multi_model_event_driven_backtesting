@@ -18,6 +18,7 @@ class NewBar(Event):
                  date: str):
         self.type = 'BAR'
         self.date = date
+        print(' ')
 
     @property
     def details(self) -> str:
@@ -40,6 +41,7 @@ class Transaction(Event):
         self.type = 'TRANSACTION'
         self.date = date
         self.trans = trans
+        print(' ')
 
     @property
     def details(self) -> str:
@@ -64,6 +66,7 @@ class CalcSignal(Event):
                  date: str):
         self.type = 'CALCSIGNAL'
         self.date = date
+        print(' ')
 
     @property
     def details(self) -> str:

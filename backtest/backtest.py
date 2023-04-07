@@ -155,6 +155,20 @@ class Backtests:
                                                               data=df,
                                                               idx=self.current_index,
                                                               pf=pf)
+
+                            elif self.strategy.name == 'Buy and hold':
+                                # Get market data for specific date.
+                                cols = list(self.strategy.id_num_shares.keys())
+
+                                df = self.market.select(columns=cols,
+                                                        start_date=self.event.date,
+                                                        end_date=self.event.date)
+                                self.strategy.calc_signal(events=self.events,
+                                                          data=df,
+                                                          idx=self.current_index,
+                                                          pf=pf,
+                                                          commission=self.mpf.commission)
+
                             else:
                                 pass
 

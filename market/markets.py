@@ -20,6 +20,7 @@ class Markets:
         self.columns = self.data.columns.to_list()
         self.som_eom()
         print('SUCCESS: Market created.')
+        print(' ')
 
     @staticmethod
     def config() -> cp.ConfigParser:
@@ -33,6 +34,7 @@ class Markets:
         conf.read('market/market_config.ini')
 
         print('INFO: I/O info read from market_config.ini file.')
+        print(' ')
 
         return conf
 
@@ -65,7 +67,7 @@ class Markets:
 
                 # Change column names to include asset name.
                 raw_data.rename(columns={'Open': file_name + '_Open',
-                                         'High': file_name + 'High',
+                                         'High': file_name + '_High',
                                          'Low': file_name + '_Low',
                                          'Close': file_name + '_Close',
                                          'Adj Close': file_name + '_AdjClose',
@@ -83,6 +85,7 @@ class Markets:
                                          left_index=True,
                                          right_index=True)
                 num_files += 1
+        print(' ')
         self.data.dropna(inplace=True)
 
     def data_valid(self) -> None:
@@ -111,6 +114,7 @@ class Markets:
                 print('WARNING: Column ' + col + ' has ' + str(col_nans) + ' number of NaN values.')
             if floats > 0:
                 print('WARNING: Column ' + col + ' has one or more non-float values.')
+        print(' ')
 
         if (empties == 0) and (nans == 0) and (floats == 0):
             print('INFO: No empty, NaN or non-float values in imported file.')
@@ -205,10 +209,6 @@ class Markets:
                 print('CRITICAL: Selected end date not in market data. Aborted.')
                 quit()
             mask = (self.data.index.values >= start_date) & (self.data.index.values <= end_date)
-            # cols.append('is_som')
-            # cols.append('is_eom')
-            # cols.append('is_sow')
-            # cols.append('is_eow')
             df = self.data[cols].loc[mask]
             return df
         else:

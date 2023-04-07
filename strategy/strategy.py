@@ -13,7 +13,8 @@ class Strategy(metaclass=abc.ABCMeta):
                     events,
                     data,
                     idx: str,
-                    pf: Portfolio):
+                    pf: Portfolio,
+                    commission: str):
         pass
 
     @abc.abstractmethod
@@ -33,19 +34,20 @@ class BuyAndHold(Strategy):
                     events,
                     data: pd.DataFrame,
                     idx: str,
-                    pf: Portfolio) -> None:
+                    pf: Portfolio,
+                    commission: str) -> None:
         if not self.completed:
             self.pf = pf
             for key, item in self.id_num_shares.items():
-                intraday_price_col_index = data.get_loc(key + '_Close')
-                intraday_price = data[key].iloc(intraday_price_col_index)
+                intraday_price_col_index = data.columns.get_loc(key)
+                intraday_price = data[key].values
                 date = pf.current_date
                 quantity = int(item)
                 trans = t(name=key,
                           direction='B',
                           quantity=quantity,
-                          price=intraday_price,
-                          commission_scheme=self.pf.commission,
+                          price=intraday_price[0],
+                          commission_scheme=commission,
                           date=date)
                 trans_ev = Transaction(date=pf.current_date,
                                        trans=trans)
@@ -110,7 +112,8 @@ class PeriodicRebalancing(Strategy):
                     events,
                     data: pd.DataFrame,
                     idx: str,
-                    pf: Portfolio) -> None:
+                    pf: Portfolio,
+                    commission: str) -> None:
         """
 
         Calculate if we need to buy more or sell to match target weight.
@@ -133,7 +136,7 @@ class PeriodicRebalancing(Strategy):
                           direction='B',
                           quantity=quantity,
                           price=price,
-                          commission_scheme=self.pf.commission,
+                          commission_scheme=commission,
                           date=date)
                 trans_ev = Transaction(date=pf.current_date,
                                        trans=trans)
@@ -158,7 +161,7 @@ class PeriodicRebalancing(Strategy):
                               direction='S',
                               quantity=quantity,
                               price=price,
-                              commission_scheme=self.pf.commission,
+                              commission_scheme=commission,
                               date=date)
                 else:
 
@@ -167,7 +170,7 @@ class PeriodicRebalancing(Strategy):
                               direction='B',
                               quantity=quantity * -1,
                               price=price,
-                              commission_scheme=self.pf.commission,
+                              commission_scheme=commission,
                               date=date)
                 trans_ev = Transaction(date=pf.current_date,
                                        trans=trans)

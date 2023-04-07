@@ -30,6 +30,7 @@ class Portfolio:
 
         self.add_symbols()
         print('SUCCESS: Portfolio ' + self.pf_id + ' created.')
+        print(' ')
 
     def add_symbols(self):
         """
@@ -100,7 +101,7 @@ class Portfolio:
         :return:
         """
         if self.benchmark != '':
-            bm_value = market_data.select(columns=[self.benchmark + '_Close'],
+            bm_value = market_data.select(columns=[self.benchmark],
                                           start_date=self.current_date,
                                           end_date=self.current_date).iloc[0, 0]
             new_trans = {'date': [date],

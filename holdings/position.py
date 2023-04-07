@@ -67,8 +67,11 @@ class Position:
                      'unrealized_pnl': self.unrealized_pnl,
                      'total_pnl': self.total_pnl}
 
-        self.transaction_history = self.transaction_history.append(new_trans,
-                                                                   ignore_index=True)
+        # self.transaction_history = self.transaction_history.append(new_trans,
+        #                                                            ignore_index=True)
+        t = pd.DataFrame(new_trans,
+                         index=['current_date'])
+        self.transaction_history = pd.concat([self.transaction_history, t])
 
     def transact(self,
                  trans: Transaction,

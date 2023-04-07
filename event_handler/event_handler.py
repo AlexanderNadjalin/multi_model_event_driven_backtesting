@@ -1,6 +1,5 @@
 import queue
 import event as ev
-import backtest.backtest as bt
 
 
 class EventHandler:
@@ -9,7 +8,7 @@ class EventHandler:
     Class for handling events.
     """
     def __init__(self,
-                 bt: bt.Backtest(),
+                 bt,
                  verbose=False):
         """
 

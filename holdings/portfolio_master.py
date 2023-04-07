@@ -37,6 +37,7 @@ class MasterPortfolio:
         conf.read('holdings/portfolio_config.ini')
 
         print('INFO: Read portfolio_config.ini file.')
+        print(' ')
 
         return conf
 
@@ -74,14 +75,10 @@ class MasterPortfolio:
             self.portfolios.append(pf)
 
     def add_strategy(self,
-                      st: strat) -> None:
+                     st: strat) -> None:
         self.strategies.append(st)
 
     def aggregate(self) -> None:
         for p in self.portfolios:
             self.history = self.history.add(p,
                                             fill_value=0)
-
-    def run_all_backtests(self):
-        for p in self.portfolios:
-            bt.Backtests.run(p)
