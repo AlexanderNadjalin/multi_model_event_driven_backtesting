@@ -15,7 +15,6 @@ class Transaction:
                  commission_scheme: str,
                  date: str):
         """
-
         :param name: Security identifier (RIC, ticker, ISIN, id etc.)
         :param direction: "B" for bought or "S" for sold.
         :param quantity: Number of units in the transaction. Sign is ignored and handled by direction parameter.
@@ -35,6 +34,11 @@ class Transaction:
 
     @staticmethod
     def validate_date_format(date: str) -> str:
+        """
+        Make sure date formatting is 'YYYY-MM-DD'.
+        :param date: Date.
+        :return: Date string.
+        """
         try:
             dt.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
@@ -44,6 +48,11 @@ class Transaction:
 
     @staticmethod
     def validate_direction(direction: str) -> str:
+        """
+        Make sure buy/sell direction is either 'B' or 'S'.
+        :param direction: Direction.
+        :return: Direction.
+        """
         if direction not in ['B', 'S']:
             print('CRITICAL: Transaction direction must be "B" or "S". "' + direction + '" was given. Aborted.')
             quit()

@@ -5,7 +5,6 @@ from holdings.transaction import Transaction
 
 class PositionHandler:
     """
-
     Helper class to handle position operations in a Portfolio object.
     """
     def __init__(self):
@@ -14,7 +13,6 @@ class PositionHandler:
     def transact_position(self,
                           trans: Transaction) -> None:
         """
-
         Execute transaction and update position.
         :param trans: Transaction.
         :return: None.
@@ -29,7 +27,6 @@ class PositionHandler:
 
     def total_market_value(self) -> float:
         """
-
         Calculate total market value for all positions.
         :return: Market value.
         """
@@ -37,7 +34,6 @@ class PositionHandler:
 
     def total_unrealized_pnl(self) -> float:
         """
-
         Calculate total unrealized PnL for all positions.
         :return: Unrealized PnL.
         """
@@ -45,7 +41,6 @@ class PositionHandler:
 
     def total_realized_pnl(self) -> float:
         """
-
         Calculate total realized PnL for all positions.
         :return: Realized PnL.
         """
@@ -53,7 +48,6 @@ class PositionHandler:
 
     def total_pnl(self) -> float:
         """
-
         Calculate total PnL for all positions.
         :return: PnL.
         """
@@ -61,7 +55,6 @@ class PositionHandler:
 
     def total_commission(self) -> float:
         """
-
         Calculate total commission for all positions.
         :return: Total commission.
         """

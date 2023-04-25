@@ -1,13 +1,16 @@
 import configparser as cp
-import strategy.strategy as strat
 import pandas as pd
+import strategy.strategy as strat
+from holdings.portfolio import Portfolio
 
 
 class MasterPortfolio:
     def __init__(self,
                  inception_date: str) -> None:
-        self.portfolios = []
-        self.strategies = []
+        self.portfolios = {}
+        self.strategies = {}
+        self.plots = []
+        self.metrics = []
 
         self.config = self.config()
         self.commission = self.config['commission']['commission_scheme']
@@ -28,9 +31,7 @@ class MasterPortfolio:
     @ staticmethod
     def config() -> cp.ConfigParser:
         """
-
         Read portfolio_config file and return a config object. Used to set default parameters for holdings objects.
-
         :return: A ConfigParser object.
         """
         conf = cp.ConfigParser()
@@ -43,7 +44,6 @@ class MasterPortfolio:
 
     def create_history_table(self) -> None:
         """
-
         Create pd.Dataframe to hold daily values of portfolio.
         :return: None.
         """
@@ -66,19 +66,32 @@ class MasterPortfolio:
                                                  'total_market_value'])
 
     def add_portfolio(self,
-                      pf) -> None:
+                      pf_id: str,
+                      pf: Portfolio) -> None:
         self.accum_init_cash += pf.init_cash
         if self.accum_init_cash > self.init_cash:
             print('CRITICAL: Master Portfolio´s initial cash exceeded. Aborted.')
             quit()
         else:
-            self.portfolios.append(pf)
+            self.portfolios[pf_id] = pf
 
     def add_strategy(self,
+                     pf_id: str,
                      st: strat) -> None:
-        self.strategies.append(st)
+        """
+        Add a strategy to a portfolio id.
+        :param pf_id: Portfolio id.
+        :param st: Strategy.
+        :return: None.
+        """
+        self.strategies[pf_id] = st
 
+    # TODO
     def aggregate(self) -> None:
+        """
+        Sum all values in the history table.
+        :return:
+        """
         for p in self.portfolios:
             self.history = self.history.add(p,
                                             fill_value=0)

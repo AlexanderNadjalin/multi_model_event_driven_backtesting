@@ -6,8 +6,7 @@ from holdings.position_handler import PositionHandler
 
 class Portfolio:
     """
-
-    Creates a Portfolio object.
+    Create a Portfolio object.
     Read portfolio_config.ini for starting values.
     Portfolio.history has information on positions, their market values, cash etc.
     Portfolio.records has calculated metrics, if the metrics.py functions are called.
@@ -26,15 +25,15 @@ class Portfolio:
         self.symbols = []
         self.history = pd.DataFrame()
         self.records = pd.DataFrame()
-        self.create_history_table()
+        self.metrics = pd.DataFrame()
 
+        self.create_history_table()
+        self.crete_records_table()
         self.add_symbols()
         print('SUCCESS: Portfolio ' + self.pf_id + ' created.')
-        print(' ')
 
     def add_symbols(self):
         """
-
         Add all symbols
         :return:
         """
@@ -45,7 +44,6 @@ class Portfolio:
                                  date: str,
                                  market_data: Markets) -> None:
         """
-
         Update current date and prices of all positions in portfolio.
         Add to portfolio history.
         :param date: Date to update all prices for.
@@ -68,7 +66,6 @@ class Portfolio:
 
     def create_history_table(self) -> None:
         """
-
         Create pd.Dataframe to hold daily values of portfolio.
         :return: None.
         """
@@ -94,7 +91,6 @@ class Portfolio:
                     date: str,
                     market_data: Markets) -> None:
         """
-
         Add portfolio values for a specific date to history.
         :param date: Date to add to portfolio history.
         :param market_data: Market data for benchmark values.
@@ -104,30 +100,59 @@ class Portfolio:
             bm_value = market_data.select(columns=[self.benchmark],
                                           start_date=self.current_date,
                                           end_date=self.current_date).iloc[0, 0]
-            new_trans = {'date': [date],
-                         'current_cash': [self.current_cash],
-                         'total_commission': [self.total_commission],
-                         'realized_pnl': [self.total_realized_pnl],
-                         'unrealized_pnl': [self.total_unrealized_pnl],
-                         'total_pnl': [self.total_pnl],
-                         'total_market_value': [self.total_market_value],
-                         'benchmark_value': [bm_value]}
+            new_bar = {'date': [date],
+                       'current_cash': [self.current_cash],
+                       'total_commission': [self.total_commission],
+                       'realized_pnl': [self.total_realized_pnl],
+                       'unrealized_pnl': [self.total_unrealized_pnl],
+                       'total_pnl': [self.total_pnl],
+                       'total_market_value': [self.total_market_value],
+                       'benchmark_value': [bm_value]}
         else:
-            new_trans = {'date': [date],
-                         'current_cash': [self.current_cash],
-                         'total_commission': [self.total_commission],
-                         'realized_pnl': [self.total_realized_pnl],
-                         'unrealized_pnl': [self.total_unrealized_pnl],
-                         'total_pnl': [self.total_pnl],
-                         'total_market_value': [self.total_market_value]}
+            new_bar = {'date': [date],
+                       'current_cash': [self.current_cash],
+                       'total_commission': [self.total_commission],
+                       'realized_pnl': [self.total_realized_pnl],
+                       'unrealized_pnl': [self.total_unrealized_pnl],
+                       'total_pnl': [self.total_pnl],
+                       'total_market_value': [self.total_market_value]}
 
-        self.history = pd.concat([self.history, pd.DataFrame(new_trans)])
+        self.history = pd.concat([self.history, pd.DataFrame(new_bar)])
+
+    def crete_records_table(self) -> None:
+        """
+        Create a holder for all transactions.
+        :return: None.
+        """
+        self.records = pd.DataFrame(columns=['date',
+                                             'direction',
+                                             'name',
+                                             'quantity',
+                                             'price',
+                                             'commission'])
+        self.records.set_index(['date'])
+
+    def add_record(self,
+                   t: Transaction) -> None:
+        """
+        Add a transaction to records.
+        :param t: Transaction object.
+        :return: None.
+        """
+        new_record = [t.date,
+                      t.direction,
+                      t.name,
+                      t.quantity,
+                      t.price,
+                      t.commission]
+        self.records.loc[len(self.records)] = new_record
+
 
     def transact_security(self,
                           trans: Transaction) -> None:
         """
-
         Complete buy/sell operation in portfolio given a transaction.
+        Add transaction to records.
         :param trans: Transaction object.
         :return: None.
         """
@@ -143,10 +168,11 @@ class Portfolio:
         else:
             self.current_cash += trans_total_cost
 
+        self.add_record(t=trans)
+
     @property
     def market_value(self) -> float:
         """
-
         Calculate the market value of all positions, excluding cash.
         :return: Market value.
         """
@@ -155,7 +181,6 @@ class Portfolio:
     @property
     def total_market_value(self) -> float:
         """
-
         Calculate the market value of all positions, including cash.
         :return: Market value.
         """
@@ -164,7 +189,6 @@ class Portfolio:
     @property
     def total_pnl(self) -> float:
         """
-
         Calculate total PnL.
         :return: Total PnL.
         """
@@ -173,7 +197,6 @@ class Portfolio:
     @property
     def total_realized_pnl(self) -> float:
         """
-
         Calculate total realized PnL.
         :return: Realized PnL.
         """
@@ -182,7 +205,6 @@ class Portfolio:
     @property
     def total_unrealized_pnl(self) -> float:
         """
-
         Calculate total unrealized PnL.
         :return: Unrealized PnL.
         """
@@ -191,7 +213,6 @@ class Portfolio:
     @property
     def total_commission(self) -> float:
         """
-
         Calculate total commission.
         :return: Total commission.
         """

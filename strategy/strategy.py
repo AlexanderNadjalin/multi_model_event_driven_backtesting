@@ -1,7 +1,7 @@
 import abc
 import pandas as pd
-from holdings.portfolio import Portfolio, Transaction as t
-from event_handler.event import Transaction
+from holdings.portfolio import Portfolio, Transaction
+from event_handler.event import Transaction as t_ev
 
 
 class Strategy(metaclass=abc.ABCMeta):
@@ -10,7 +10,6 @@ class Strategy(metaclass=abc.ABCMeta):
     """
     @abc.abstractmethod
     def calc_signal(self,
-                    events,
                     data,
                     idx: str,
                     pf: Portfolio,
@@ -31,34 +30,32 @@ class BuyAndHold(Strategy):
         self.completed = False
 
     def calc_signal(self,
-                    events,
                     data: pd.DataFrame,
                     idx: str,
                     pf: Portfolio,
-                    commission: str) -> None:
+                    commission: str) -> Transaction:
         if not self.completed:
             self.pf = pf
             for key, item in self.id_num_shares.items():
-                intraday_price_col_index = data.columns.get_loc(key)
                 intraday_price = data[key].values
                 date = pf.current_date
                 quantity = int(item)
-                trans = t(name=key,
-                          direction='B',
-                          quantity=quantity,
-                          price=intraday_price[0],
-                          commission_scheme=commission,
-                          date=date)
-                trans_ev = Transaction(date=pf.current_date,
-                                       trans=trans)
-                events.put(item=trans_ev)
+                trans = Transaction(name=key,
+                                    direction='B',
+                                    quantity=quantity,
+                                    price=intraday_price[0],
+                                    commission_scheme=commission,
+                                    date=date)
+                trans_ev = t_ev(date=pf.current_date,
+                                trans=trans,
+                                pf_id=pf.pf_id)
                 self.completed = True
+                return trans_ev
         else:
             pass
 
     def description(self) -> str:
         """
-
         Get {position name: number of shares} as string with line break in between.
         :return: String.
         """
@@ -70,7 +67,6 @@ class BuyAndHold(Strategy):
 
 class PeriodicRebalancing(Strategy):
     """
-
     Re-balance the portfolio on either:
     * end-of-month (eom)
     * start-of-month (som)
@@ -82,7 +78,6 @@ class PeriodicRebalancing(Strategy):
                  period: str,
                  id_weight: dict):
         """
-
         Set parameters for
         :param period: Either: end-of-month (eom), start-of-month (som), end-of-week (eow) or
         start-of-week (sow).
@@ -109,19 +104,17 @@ class PeriodicRebalancing(Strategy):
             quit()
 
     def calc_signal(self,
-                    events,
                     data: pd.DataFrame,
                     idx: str,
                     pf: Portfolio,
-                    commission: str) -> None:
+                    commission: str) -> Transaction:
         """
-
         Calculate if we need to buy more or sell to match target weight.
-        :param events: Event queue.
         :param data: Market data from Backtest.
         :param idx: Index from date in Backtest.
         :param pf: Portfolio from Backtest.
-        :return: None.
+        :param commission: Commission.
+        :return: Transaction.
         """
         self.pf = pf
         for key, item in self.id_weight.items():
@@ -132,15 +125,15 @@ class PeriodicRebalancing(Strategy):
                 price = data[key].iloc[0]
                 date = pf.current_date
                 quantity = int(item * self.pf.total_market_value / price)
-                trans = t(name=key,
-                          direction='B',
-                          quantity=quantity,
-                          price=price,
-                          commission_scheme=commission,
-                          date=date)
-                trans_ev = Transaction(date=pf.current_date,
-                                       trans=trans)
-                events.put(item=trans_ev)
+                trans = Transaction(name=key,
+                                    direction='B',
+                                    quantity=quantity,
+                                    price=price,
+                                    commission_scheme=commission,
+                                    date=date)
+                trans_ev = t_ev(date=pf.current_date,
+                                trans=trans)
+                return trans_ev
 
             # Existing positions. Buy or sell to match target weight.
             else:
@@ -157,28 +150,27 @@ class PeriodicRebalancing(Strategy):
                 if quantity > 0:
 
                     # Sell excess weight.
-                    trans = t(name=key,
-                              direction='S',
-                              quantity=quantity,
-                              price=price,
-                              commission_scheme=commission,
-                              date=date)
+                    trans = Transaction(name=key,
+                                        direction='S',
+                                        quantity=quantity,
+                                        price=price,
+                                        commission_scheme=commission,
+                                        date=date)
                 else:
 
                     # Buy the difference in weight.
-                    trans = t(name=key,
-                              direction='B',
-                              quantity=quantity * -1,
-                              price=price,
-                              commission_scheme=commission,
-                              date=date)
-                trans_ev = Transaction(date=pf.current_date,
-                                       trans=trans)
-                events.put(item=trans_ev)
+                    trans = Transaction(name=key,
+                                        direction='B',
+                                        quantity=quantity * -1,
+                                        price=price,
+                                        commission_scheme=commission,
+                                        date=date)
+                trans_ev = t_ev (date=pf.current_date,
+                                 trans=trans)
+                return trans_ev
 
     def description(self) -> str:
         """
-
         Get {position name: weight} as string with line break in between.
         :return: String.
         """

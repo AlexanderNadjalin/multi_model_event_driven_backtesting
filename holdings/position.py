@@ -5,7 +5,6 @@ from holdings.transaction import Transaction
 
 class Position:
     """
-
     Position object. Is created by transaction.py objects.
     All transactions are separated into buy or sell to facilitate accounting.
     Short selling is supported.
@@ -27,7 +26,6 @@ class Position:
 
     def create_history_table(self) -> None:
         """
-
         Create pd.Dataframe to hold all transactions making up the Position.
         :return: None.
         """
@@ -48,7 +46,6 @@ class Position:
 
     def add_history(self) -> None:
         """
-
         Add current transaction details to Position history.
         :return: None.
         """
@@ -66,9 +63,6 @@ class Position:
                      'realized_pnl': self.realized_pnl,
                      'unrealized_pnl': self.unrealized_pnl,
                      'total_pnl': self.total_pnl}
-
-        # self.transaction_history = self.transaction_history.append(new_trans,
-        #                                                            ignore_index=True)
         t = pd.DataFrame(new_trans,
                          index=['current_date'])
         self.transaction_history = pd.concat([self.transaction_history, t])
@@ -77,7 +71,6 @@ class Position:
                  trans: Transaction,
                  verbose=False) -> None:
         """
-
         Transacts the position with accounting.
         :param trans: Transaction object.
         :param verbose: If True, prints details of transaction.
@@ -105,7 +98,6 @@ class Position:
                                     market_price: float,
                                     date: str) -> None:
         """
-
         Updates current market price and current date.
         :param market_price: New market price from market.py.
         :param date: Corresponding date for market_price.
@@ -124,7 +116,6 @@ class Position:
                      price: float,
                      commission: float) -> None:
         """
-
         Accounting for a long position.
         :param quantity: Quantity bought.
         :param price: Price.
@@ -140,7 +131,6 @@ class Position:
                       price: float,
                       commission: float) -> None:
         """
-
         Accounting for a short position.
         :param quantity: Quantity sold.
         :param price: Price.
@@ -154,7 +144,6 @@ class Position:
     @property
     def direction(self) -> int:
         """
-
         Determine direction of transaction.
         :return: Returns 1 for buy transaction, -1 for a sell transaction.
         """
@@ -166,7 +155,6 @@ class Position:
     @property
     def market_value(self) -> float:
         """
-
         Calculate current market value.
         :return: Current market value.
         """
@@ -175,7 +163,6 @@ class Position:
     @property
     def avg_price(self) -> float:
         """
-
         Calculate the average price for all long and short transactions.
         :return: Average price.
         """
@@ -189,7 +176,6 @@ class Position:
     @property
     def net_quantity(self) -> float:
         """
-
         Calculate net quantity.
         :return: Net quantity.
         """
@@ -198,7 +184,6 @@ class Position:
     @property
     def total_bought(self) -> float:
         """
-
         Calculate the total average cost of buy transactions.
         :return:Total average cost for buys.
         """
@@ -207,7 +192,6 @@ class Position:
     @property
     def total_sold(self) -> float:
         """
-
         Calculate the total average cost of sell transactions.
         :return:Total average cost for sells.
         """
@@ -216,7 +200,6 @@ class Position:
     @property
     def total_net(self) -> float:
         """
-
         Calculate the total average cost of all transactions.
         :return:Total average cost.
         """
@@ -225,7 +208,6 @@ class Position:
     @property
     def total_commission(self) -> float:
         """
-
         Calculate total commission for all transactions.
         :return: Total commission.
         """
@@ -234,7 +216,6 @@ class Position:
     @property
     def net_incl_commission(self) -> float:
         """
-
         Calculate the total average cost of all transactions including commission.
         :return:
         """
@@ -243,7 +224,6 @@ class Position:
     @property
     def realized_pnl(self) -> float:
         """
-
         Calculate the profit-and-loss (pnl) for two opposing transaction in the position.
         :return: Realized pnl.
         """
@@ -273,7 +253,6 @@ class Position:
     @property
     def unrealized_pnl(self) -> float:
         """
-
         Calculate the profit-and-loss (pnl) for the remaining non-zero quantity for the current market price.
         :return: Unrealized pnl.
         """
@@ -282,7 +261,6 @@ class Position:
     @property
     def total_pnl(self) -> float:
         """
-
         Calculate the sum of realized and unrealized pnl.
         :return: Total net pnl.
         """
