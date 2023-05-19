@@ -2,6 +2,7 @@ import configparser as cp
 import pandas as pd
 import strategy.strategy as strat
 from holdings.portfolio import Portfolio
+from market.markets import Markets
 
 
 class MasterPortfolio:
@@ -9,10 +10,12 @@ class MasterPortfolio:
                  inception_date: str) -> None:
         self.portfolios = {}
         self.strategies = {}
+        self.strategy_names = {}
         self.plots = []
         self.metrics = []
 
-        self.config = self.config()
+        self.config, self.metrics_config = self.config()
+        self.type = 'MasterPortfolio'
         self.commission = self.config['commission']['commission_scheme']
         self.init_cash = float(self.config['init_cash']['init_cash'])
         self.accum_init_cash = 0
@@ -29,41 +32,38 @@ class MasterPortfolio:
         print('SUCCESS: Master Portfolio ' + self.pf_id + ' created.')
 
     @ staticmethod
-    def config() -> cp.ConfigParser:
+    def config() -> (cp.ConfigParser, cp.ConfigParser):
         """
-        Read portfolio_config file and return a config object. Used to set default parameters for holdings objects.
-        :return: A ConfigParser object.
+        Read portfolio_config file and metric_config files.
+        Return a config object for portfolio, and one for metrics.
+        Used to set default parameters for holdings and metrics objects.
+        :return: Two ConfigParser objects.
         """
         conf = cp.ConfigParser()
         conf.read('holdings/portfolio_config.ini')
+        m_conf = cp.ConfigParser()
+        m_conf.read('metric/metric_config.ini')
 
         print('INFO: Read portfolio_config.ini file.')
         print(' ')
 
-        return conf
+        return conf, m_conf
 
     def create_history_table(self) -> None:
         """
         Create pd.Dataframe to hold daily values of portfolio.
         :return: None.
         """
-        if self.benchmark != '':
-            self.history = pd.DataFrame(columns=['date',
-                                                 'current_cash',
-                                                 'total_commission',
-                                                 'realized_pnl',
-                                                 'unrealized_pnl',
-                                                 'total_pnl',
-                                                 'total_market_value',
-                                                 'benchmark_value'])
-        else:
-            self.history = pd.DataFrame(columns=['date',
-                                                 'current_cash',
-                                                 'total_commission',
-                                                 'realized_pnl',
-                                                 'unrealized_pnl',
-                                                 'total_pnl',
-                                                 'total_market_value'])
+        self.history = pd.DataFrame(columns=['date',
+                                             'current_cash',
+                                             'total_commission',
+                                             'realized_pnl',
+                                             'unrealized_pnl',
+                                             'total_pnl',
+                                             'total_market_value',
+                                             'benchmark_value'])
+        self.history.set_index('date',
+                               inplace=True)
 
     def add_portfolio(self,
                       pf_id: str,
@@ -86,12 +86,41 @@ class MasterPortfolio:
         """
         self.strategies[pf_id] = st
 
-    # TODO
-    def aggregate(self) -> None:
+    def update_bench_mark(self,
+                          date: str,
+                          market: Markets) -> None:
         """
-        Sum all values in the history table.
-        :return:
+        Aggregate all portfolio history collumn values for this date. Add benchmark value for MasterPortfolio.
+        :param date: Date.
+        :param market: Markets object.
+        :return: None.
         """
-        for p in self.portfolios:
-            self.history = self.history.add(p,
-                                            fill_value=0)
+        current_cash = 0
+        total_commission = 0
+        realized_pnl = 0
+        unrealized_pnl = 0
+        total_pnl = 0
+        total_market_value = 0
+
+        # Add a new day's aggregated data for the Master Portfolio.
+        for pf in self.portfolios:
+            port = self.portfolios.get(pf)
+            current_cash += port.history.loc[date, 'current_cash']
+            total_commission += port.history.loc[date, 'total_commission']
+            realized_pnl += port.history.loc[date, 'realized_pnl']
+            unrealized_pnl += port.history.loc[date, 'unrealized_pnl']
+            total_pnl += port.history.loc[date, 'total_pnl']
+            total_market_value += port.history.loc[date, 'total_market_value']
+        # Add the Master Portfolio's benchmark value.
+        bm = market.select([self.benchmark],
+                           start_date=date,
+                           end_date=date)
+        bm = bm.iloc[0, 0]
+        row = [current_cash,
+               total_commission,
+               realized_pnl,
+               unrealized_pnl,
+               total_pnl,
+               total_market_value,
+               bm]
+        self.history.loc[date] = row

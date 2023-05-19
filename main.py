@@ -1,15 +1,13 @@
-import matplotlib.pyplot as plt
-
 import market.markets as m
 from holdings import portfolio_master, portfolio
 import backtest.backtest as bt
 import strategy.strategy as strat
-import plot.plot as plot
+from plot.plot import Plot
 
 
 if __name__ == '__main__':
-    start_date = '2023-01-02'
-    end_date = '2023-01-16'
+    start_date = '2020-12-30'
+    end_date = '2023-03-06'
 
     market = m.Markets(fill_missing_method=None)
 
@@ -36,10 +34,13 @@ if __name__ == '__main__':
                         mpf=mp,
                         start_date=start_date,
                         end_date=end_date,
-                        verbose=True)
+                        verbose=False)
 
     test.run()
-    plt1 = plot.Plot(pf=[mp, p1, p2],
-                     save_path=test.config['output_files']['output_file_directory'])
-    plt1.aggr_rets(rets=p1.records)
+
+    p = Plot(bt=test)
+    p.drawdowns_plot(pf_list=[mp],
+                     save=False)
+    p.rolling_sharpe_beta_plot(pf_list=[mp])
+
     quit()

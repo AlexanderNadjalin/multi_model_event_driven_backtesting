@@ -6,9 +6,9 @@ from holdings.portfolio import Portfolio
 from holdings.portfolio_master import MasterPortfolio
 
 
-class Metric:
+class Metrics:
     """
-    Metric object.
+    Metrics object.
     Calculates portfolio metrics for performance, risk, returns etc.
     """
     def __init__(self):
@@ -44,7 +44,7 @@ class Metric:
         pf.metrics.iloc[0, col_idx] = pf.metrics['total_market_value'].iloc[0] / pf.init_cash - 1
         pf.metrics['pf_cum_rets'] = np.cumprod(1 + pf.metrics['pf_1d_pct_rets']) - 1
 
-        # If benchmark exists
+        # If benchmark exists.
         if pf.benchmark == '':
             pass
         else:
@@ -52,9 +52,9 @@ class Metric:
             col_idx = pf.metrics.columns.get_loc('bm_1d_pct_rets')
             pf.metrics.iloc[0, col_idx] = 0
             pf.metrics['bm_cum_rets'] = np.cumprod(1 + pf.metrics['bm_1d_pct_rets']) - 1
-        pf.metrics.set_index('date', inplace=True)
         pf.metrics.fillna(0, inplace=True)
-        print('INFO: Metrics calculated for returns.')
+
+        print('INFO: Portfolio: ' + pf.pf_id + ': Metric "returns" calculated.')
 
     @staticmethod
     def create_drawdowns(pf: Portfolio):
@@ -74,6 +74,8 @@ class Metric:
         for t in range(1, len(eq_idx)):
             cur_hwm = max(high_water_mark[t - 1], equity_curve[t])
             high_water_mark.append(cur_hwm)
+            drawdown[0] = 0
+            duration[0] = 0
             if t == 1:
                 drawdown[t] = 0
             else:
@@ -82,11 +84,13 @@ class Metric:
                 else:
                     drawdown[t] = (equity_curve[t] / high_water_mark[t] - 1)
             duration[t] = 0 if drawdown[t] == 0 else duration[t - 1] + 1
-        pf.metrics['drawdown'] = drawdown
-        pf.metrics['duration'] = duration
+
+        pf.metrics['drawdown'] = drawdown.values
+        pf.metrics['duration'] = duration.values
         pf.metrics['drawdown'].fillna(0, inplace=True)
         pf.metrics['duration'].fillna(0, inplace=True)
-        print('INFO: Metrics calculated for drawdowns.')
+
+        print('INFO: Portfolio: ' + pf.pf_id + ': Metric "drawdowns" calculated.')
 
     @staticmethod
     def max_drawdown(pf: Portfolio) -> float:
@@ -136,7 +140,7 @@ class Metric:
                 bm_rolling_sharpe = np.sqrt(period) * bm_rolling.mean() / bm_rolling.std()
                 bm_rolling_sharpe.fillna(0, inplace=True)
                 pf.metrics['bm_sharpe_ratio'] = bm_rolling_sharpe
-                print('INFO: Metrics calculated for rolling Sharpe ratio.')
+                print('INFO: Portfolio: ' + pf.pf_id + ': Metric "rolling Sharpe Ratio" calculated.')
             else:
                 print('WARNING: No benchmark selected for portfolio ' + pf.pf_id +
                       '. Rolling Sharpe ratio not calculated.')
@@ -161,11 +165,14 @@ class Metric:
                 pf_idx = pf.metrics.columns.get_loc('pf_1d_pct_rets')
                 bm_idx = pf.metrics.columns.get_loc('bm_1d_pct_rets')
                 pf_ = pf.metrics.iloc[:, pf_idx]
-                bm_ = pf.metrics.iloc[:, bm_idx]
+                bm_ = pf.metrics.iloc[:, bm_idx].to_frame()
                 roll_pf = pf_.rolling(window=period)
                 roll_bm = bm_.rolling(window=period)
+
+                data = pd.concat([pf.metrics.iloc[:, pf_idx], pf.metrics.iloc[:, bm_idx]], axis=1)
+
                 roll_var = roll_pf.var()
-                roll_cov = roll_pf.cov(roll_bm)
+                roll_cov = roll_pf.cov(data['bm_1d_pct_rets'])
 
                 # Periods longer than "period" of no variance makes for division by zero. Floor to low non-zero value.
                 roll_var = roll_var.apply(lambda x: x if x > 1.e-05 else 0.00001)
@@ -175,7 +182,7 @@ class Metric:
 
                 pf.metrics.fillna(0, inplace=True)
 
-                print('INFO: Metrics calculated for rolling beta.')
+                print('INFO: Portfolio: ' + pf.pf_id + ': Metric "rolling beta" calculated.')
             else:
                 print('WARNING: No benchmark selected for portfolio ' + pf.pf_id + '. Rolling beta not calculated.')
 

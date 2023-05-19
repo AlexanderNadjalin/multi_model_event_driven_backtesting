@@ -2,7 +2,7 @@ import configparser as cp
 from event_handler import e_handler, event
 from market.markets import Markets
 from holdings.portfolio_master import MasterPortfolio
-from metric.metric import Metric
+from metric.metric import Metrics
 
 
 class Backtests:
@@ -26,7 +26,7 @@ class Backtests:
         self.mpf = mpf
 
         self.verbose = verbose
-        self.metric = Metric()
+        self.metric = Metrics()
         self.strategy = None
 
         self.start_date = start_date
@@ -50,6 +50,7 @@ class Backtests:
         conf = cp.ConfigParser()
         conf.read('backtest/backtest_config.ini')
 
+        print('')
         print('INFO: Read from backtest_config.ini file.')
 
         return conf
@@ -104,6 +105,8 @@ class Backtests:
                         pf = self.mpf.portfolios.get(pf_id)
                         pf.update_all_market_values(date=self.current_event.date,
                                                     market_data=self.market)
+                    self.mpf.update_bench_mark(date=self.current_date,
+                                               market=self.market)
 
                 # CALCSIGNAL type event.
                 # Done for all portfolios.
@@ -185,12 +188,10 @@ class Backtests:
                         self.metric.all_metrics(pf)
                     else:
                         print('WARNING: No transactions made in portfolio ' + pf.pf_id + '.')
-                self.mpf.aggregate()
-                pf = self.mpf
                 self.metric.all_metrics(self.mpf)
                 self.cont_backtest = False
-
-                print('SUCCESS: Backtest completed for maser portfolio: ' + self.mpf.pf_id + '.')
+                print('')
+                print('SUCCESS: Backtest completed for master portfolio: ' + self.mpf.pf_id + '.')
             else:
                 self.current_date = \
                     self.market.data.iloc[self.current_index, :].to_frame().transpose().index.values[0]

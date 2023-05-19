@@ -16,6 +16,7 @@ class Portfolio:
                  benchmark: str,
                  pf_id: str) -> None:
 
+        self.type = 'Portfolio'
         self.init_cash = init_cash
         self.current_cash = self.init_cash
         self.current_date = None
@@ -86,6 +87,8 @@ class Portfolio:
                                                  'unrealized_pnl',
                                                  'total_pnl',
                                                  'total_market_value'])
+        self.history.set_index('date',
+                               inplace=True)
 
     def add_history(self,
                     date: str,
@@ -96,28 +99,27 @@ class Portfolio:
         :param market_data: Market data for benchmark values.
         :return:
         """
+        new_bar = []
         if self.benchmark != '':
             bm_value = market_data.select(columns=[self.benchmark],
                                           start_date=self.current_date,
                                           end_date=self.current_date).iloc[0, 0]
-            new_bar = {'date': [date],
-                       'current_cash': [self.current_cash],
-                       'total_commission': [self.total_commission],
-                       'realized_pnl': [self.total_realized_pnl],
-                       'unrealized_pnl': [self.total_unrealized_pnl],
-                       'total_pnl': [self.total_pnl],
-                       'total_market_value': [self.total_market_value],
-                       'benchmark_value': [bm_value]}
+            new_bar = [self.current_cash,
+                       self.total_commission,
+                       self.total_realized_pnl,
+                       self.total_unrealized_pnl,
+                       self.total_pnl,
+                       self.total_market_value,
+                       bm_value]
         else:
-            new_bar = {'date': [date],
-                       'current_cash': [self.current_cash],
-                       'total_commission': [self.total_commission],
-                       'realized_pnl': [self.total_realized_pnl],
-                       'unrealized_pnl': [self.total_unrealized_pnl],
-                       'total_pnl': [self.total_pnl],
-                       'total_market_value': [self.total_market_value]}
-
-        self.history = pd.concat([self.history, pd.DataFrame(new_bar)])
+            new_bar = [self.current_cash,
+                       self.total_commission,
+                       self.total_realized_pnl,
+                       self.total_unrealized_pnl,
+                       self.total_pnl,
+                       self.total_market_value,
+                       0]
+        self.history.loc[date] = new_bar
 
     def crete_records_table(self) -> None:
         """

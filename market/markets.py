@@ -114,7 +114,6 @@ class Markets:
                 print('WARNING: Column ' + col + ' has ' + str(col_nans) + ' number of NaN values.')
             if floats > 0:
                 print('WARNING: Column ' + col + ' has one or more non-float values.')
-        print(' ')
 
         if (empties == 0) and (nans == 0) and (floats == 0):
             print('INFO: No empty, NaN or non-float values in imported file.')
