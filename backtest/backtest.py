@@ -44,7 +44,6 @@ class Backtests:
     def config() -> cp.ConfigParser:
         """
         Read backtest_config file and return a config object. Used to set default parameters for backtesting objects.
-
         :return: A ConfigParser object.
         """
         conf = cp.ConfigParser()

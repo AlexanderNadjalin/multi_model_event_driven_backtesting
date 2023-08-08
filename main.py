@@ -2,6 +2,7 @@ import market.markets as m
 from holdings import portfolio_master, portfolio
 import backtest.backtest as bt
 import strategy.strategy as strat
+import ml.DNN as dnn
 from plot.plot import Plot
 
 
@@ -29,6 +30,12 @@ if __name__ == '__main__':
                     st=s1)
     mp.add_strategy(pf_id=p2.pf_id,
                     st=s2)
+
+    dnn1 = dnn.DNN(data=market.data,
+                   load_from_file=False,
+                   model_file_name='dnn1',
+                   train=True,
+                   save_trained=False)
 
     test = bt.Backtests(market=market,
                         mpf=mp,
